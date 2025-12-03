@@ -40,6 +40,18 @@ CUDA-L2: Surpassing cuBLAS Performance for Matrix Multiplication through Reinfor
 - [ ] Extend to more GPUs (Ada Lovelace, Hopper, Blackwell).
 - [ ] Easy deployment for open-source LLMs.
 
+## FAQ
+
+**Q: Do A100 kernels apply to other machines like RTX 3090 or H100?**
+
+A: Ideally, kernels trained on A100 should only be used on A100. They might have speedup on other machines, but it's not guaranteed. We will progressively release kernels trained on different machines.
+
+**Q: What if I need matrix dimensions (M, N, K) not found in your configurations?**
+
+A: 
+1. You can find the nearest neighbor configuration (larger than yours) and pad with zeros.
+2. Feel free to post your dimensions on GitHub issues. We are happy to release kernels for your configuration.
+
 
 ## Installation & Setup
 
@@ -97,3 +109,7 @@ For server mode, you need to specify `--target_qps`:
 | `--gpu_device_id` | The ID of the GPU to use (e.g., `7`). |
 | **`--mode`** | **Execution mode.** Options are:<br>• `offline`: Runs the evaluation in offline/batch processing mode.<br>• `server`: Runs the evaluation in server mode (simulating request-based scenarios). |
 | `--target_qps` | Target Queries Per Second (QPS) for server mode. Required if mode is `server`. |
+
+
+## ✉️ Contact
+If you have any questions, please open a GitHub issue or reach out to us at **jiwei_li@deep-reinforce.com**.
