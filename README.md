@@ -44,7 +44,7 @@ CUDA-L2: Surpassing cuBLAS Performance for Matrix Multiplication through Reinfor
 
 **Q: Do A100 kernels apply to other machines like RTX 3090 or H100?**
 
-A: Ideally, kernels trained on A100 should only be used on A100. They might have speedup on other machines, but it's not guaranteed. We will progressively release kernels trained on different machines.
+A: Ideally, kernels trained on A100 should only be used on A100 if you are targeting speedup. They might have speedup on other machines, but it's not guaranteed. We will progressively release kernels trained on different machines.
 
 **Q: What if I need matrix dimensions (M, N, K) not found in your configurations?**
 
