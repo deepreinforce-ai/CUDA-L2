@@ -32,7 +32,7 @@ CUDA-L2: Surpassing cuBLAS Performance for Matrix Multiplication through Reinfor
 
 
 ## 🎉 What's New
-- **[Jan 7, 2026]** Released 1,000 A100 HGEMM kernels with 32-bit accumulator (SM80_16x8x16_F16F16F16F16). 🎉🎉🎉
+- **[Jan 7, 2026]** Released 1,000 A100 HGEMM kernels with 32-bit accumulator (SM80_16x8x16_F32F16F16F32). 🎉🎉🎉
   <div align="center">
 
   | Mode | vs cuBLAS | vs cuBLASLt-heuristic | vs cuBLASLt-AutoTuning |
