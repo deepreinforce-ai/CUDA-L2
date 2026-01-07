@@ -19,7 +19,7 @@ CUDA-L2: Surpassing cuBLAS Performance for Matrix Multiplication through Reinfor
 <div align="center">
   <img src="assets/benchmark_comparison.png" width="90%" alt="Evaluation Results">
   <br>
-  <em>Speedup of CUDA-L2 over torch.matmul, cuBLAS, cuBLASLt-heuristic, and cuBLASLt-AutoTuning across 1000 (M,N,K) configurations on A100.</em>
+  <em>Speedup of CUDA-L2 over torch.matmul, cuBLAS, cuBLASLt-heuristic, and cuBLASLt-AutoTuning across 1000 (M,N,K) on A100 (16-bit accumulator).</em>
 </div>
 
 <br>
@@ -27,16 +27,20 @@ CUDA-L2: Surpassing cuBLAS Performance for Matrix Multiplication through Reinfor
 <div align="center">
   <img src="assets/table.png" width="90%" alt="Evaluation Results">
   <br>
-  <em>Speedup comparison results across 1000 (M,N,K) configurations on A100.</em>
+  <em>Speedup comparison across 1000 (M,N,K) on A100 (16-bit accumulator).</em>
 </div>
 
 
 ## 🎉 What's New
 - **[Jan 7, 2026]** Released 1,000 A100 HGEMM kernels with 32-bit accumulator (SM80_16x8x16_F16F16F16F16). 🎉🎉🎉
+  <div align="center">
+
   | Mode | vs cuBLAS | vs cuBLASLt-heuristic | vs cuBLASLt-AutoTuning |
-  |------|-----------|----------------------|------------------------|
+  |:----:|:---------:|:--------------------:|:----------------------:|
   | Offline | +20.4% | +16.9% | +12.2% |
-  | Server | +21.5% | +19.9% | +12.7% |  
+  | Server | +21.5% | +19.9% | +12.7% |
+
+  </div>  
 - **[Dec 2, 2025]** Released A100 optimized HGEMM kernels across 1,000 configurations with 16-bit accumulator (SM80_16x8x16_F16F16F16F16). 
 
 ## 🗒️ To-Do List
