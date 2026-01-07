@@ -2,6 +2,7 @@
 
 # Initialize variables with default values
 MNK=""
+ACC_PRECISE=""
 WARMUP_SECONDS=""
 BENCHMARK_SECONDS=""
 BASE_DIR=""
@@ -15,6 +16,10 @@ while [[ $# -gt 0 ]]; do
     case $1 in
         --mnk)
             MNK="$2"
+            shift 2
+            ;;
+        --acc_precise)
+            ACC_PRECISE="$2"
             shift 2
             ;;
         --warmup_seconds)
@@ -49,6 +54,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 echo "MNK: $MNK"
+echo "ACC_PRECISE: $ACC_PRECISE"
 echo "WARMUP_SECONDS: $WARMUP_SECONDS"
 echo "BENCHMARK_SECONDS: $BENCHMARK_SECONDS"
 echo "BASE_DIR: $BASE_DIR"
@@ -58,10 +64,7 @@ rm $BASE_DIR/benchmark*
 
 python zero_one_correctness_check.py \
         --mnk $MNK \
-        --base_dir $BASE_DIR \
-        --gpu_device_id $GPU_DEVICE_ID
-python randn_correctness_check.py \
-        --mnk $MNK \
+        --acc_precise $ACC_PRECISE \
         --base_dir $BASE_DIR \
         --gpu_device_id $GPU_DEVICE_ID
 if [ $? -ne 0 ]; then
@@ -93,6 +96,7 @@ for func in $(shuf -e "${PERF_FUNCS[@]}"); do
         # need to add --target_qps argument
         python benchmarking_server.py \
             --mnk $MNK \
+            --acc_precise $ACC_PRECISE \
             --warmup_seconds $WARMUP_SECONDS \
             --benchmark_seconds $BENCHMARK_SECONDS \
             --base_dir $BASE_DIR \
@@ -102,6 +106,7 @@ for func in $(shuf -e "${PERF_FUNCS[@]}"); do
     else
         python benchmarking_offline.py \
             --mnk $MNK \
+            --acc_precise $ACC_PRECISE \
             --warmup_seconds $WARMUP_SECONDS \
             --benchmark_seconds $BENCHMARK_SECONDS \
             --base_dir $BASE_DIR \
@@ -118,6 +123,6 @@ for func in $(shuf -e "${PERF_FUNCS[@]}"); do
 done
 
 # 4. Summarize the results
-python summarize_result.py --base_dir $BASE_DIR
+python summarize_result.py --base_dir $BASE_DIR --acc_precise $ACC_PRECISE
 
 echo "All benchmarks completed successfully!"

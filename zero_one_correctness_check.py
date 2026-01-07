@@ -18,6 +18,7 @@ print("======================Correctness Check======================")
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--mnk", type=str, required=True)
+parser.add_argument("--acc_precise", type=str, required=True)
 parser.add_argument("--base_dir", type=str, required=True)
 parser.add_argument("--gpu_device_id", type=int, required=True)
 args = parser.parse_args()
@@ -27,10 +28,20 @@ torch.set_grad_enabled(False)
 
 
 load_start = time.time()
-hgemm = build_from_sources(mnk=args.mnk, base_dir=args.base_dir, verbose=False)
+hgemm = build_from_sources(mnk=args.mnk, acc_precise=args.acc_precise, base_dir=args.base_dir, verbose=False)
 load_end = time.time()
 print(f"Load hgemm module time: {load_end - load_start:.2f} seconds")
 
+if args.acc_precise == "fp16":
+    cuda_l2_func = hgemm.cuda_l2_a100_fp16  # type: ignore
+    cuda_l2_func_name = "cuda_l2_a100_fp16"
+    kernels_dir_name = "F16F16F16F16"
+elif args.acc_precise == "fp32":
+    cuda_l2_func = hgemm.cuda_l2_a100_fp32  # type: ignore
+    cuda_l2_func_name = "cuda_l2_a100_fp32"
+    kernels_dir_name = "F32F16F16F32"
+else:
+    raise ValueError
 
 @torch.no_grad
 def compare_kernels_with_cpu_fp32(
@@ -82,7 +93,7 @@ def compare_kernels_with_cpu_fp32(
         
         for perf_func in kernel_funcs:
             tag = perf_func.__name__
-            if tag == "cuda_l2_a100_fp16":
+            if tag == cuda_l2_func_name:
                 # We not only need to allocate a, b, c, but also wrap a layer of data outside the physical space of a, b, b_col_major, c, with a width of 16384 on both sides, so that we can later check whether this layer of data has been modified
                 # Because we want to ensure continuity, our large_a and large_b should be 1-dimensional, so we only need to add 16384 rows of data at the head and tail respectively
                 
@@ -206,7 +217,7 @@ def run_correctness_check(
         hgemm.hgemm_cublaslt_auto_tuning_tn,  # type: ignore
         hgemm.hgemm_cublaslt_auto_tuning_nn,  # type: ignore
         torch.matmul,
-        hgemm.cuda_l2_a100_fp16,
+        cuda_l2_func,
     ]
     
 
@@ -227,29 +238,29 @@ def run_correctness_check(
         return False, "memory overflow detected.", result
 
     
-    # Correctness check for cuda_l2_a100_fp16
-    # Dynamically extract ALL other kernels' diffs (excluding cuda_l2_a100_fp16, nan, and Inf)
+    # Correctness check for cuda_l2_func_name
+    # Dynamically extract ALL other kernels' diffs (excluding cuda_l2_func_name, nan, and Inf)
     other_diffs = []
     print(result)
     for key, val in result.items():
-        # Get all avg_*_diff keys except cuda_l2_a100_fp16
-        if key.startswith("avg_") and key.endswith("_diff") and key != "avg_cuda_l2_a100_fp16_diff":
+        # Get all avg_*_diff keys except cuda_l2_func_name
+        if key.startswith("avg_") and key.endswith("_diff") and key != f"avg_{cuda_l2_func_name}_diff":
             # Skip nan and Inf values
             if isinstance(val, (int, float)) and val == val and val != float('inf') and val != float('-inf'):
                 other_diffs.append(val)
     
-    if other_diffs and "avg_cuda_l2_a100_fp16_diff" in result:
-        v2_diff = result["avg_cuda_l2_a100_fp16_diff"]
+    if other_diffs and f"avg_{cuda_l2_func_name}_diff" in result:
+        v2_diff = result[f"avg_{cuda_l2_func_name}_diff"]
         
         # Skip if v2_diff itself is nan or Inf
         if not (isinstance(v2_diff, (int, float)) and v2_diff == v2_diff and v2_diff != float('inf') and v2_diff != float('-inf')):
-            return False, f"cuda_l2_a100_fp16 has nan or Inf value: {v2_diff}", result
+            return False, f"{cuda_l2_func_name} has nan or Inf value: {v2_diff}", result
         
         max_other_diff = max(other_diffs)
         
         current_abs_path = Path(__file__).resolve().parent
         if v2_diff > 0.0:
-            error_msg = f"cuda_l2_a100_fp16 diff ({v2_diff:.6f}) exceeds 0 (max_other: {max_other_diff:.6f}), see {current_abs_path} for details."
+            error_msg = f"{cuda_l2_func_name} diff ({v2_diff:.6f}) exceeds 0 (max_other: {max_other_diff:.6f}), see {current_abs_path} for details."
             return False, error_msg, result
         else:
             correctness_msg = f"Precise Correctness check passed: v2_diff={v2_diff:.6f}, max_other={max_other_diff:.6f}, see {current_abs_path} for details."
@@ -262,7 +273,7 @@ def run_correctness_check(
 def main():
     m, n, k = map(int, args.mnk.split("_"))
     torch.cuda.set_device(args.gpu_device_id)
-    with open(f"kernels/a100_F16F16F16F16/{args.mnk}.cu", "r") as f:
+    with open(f"kernels/a100_{kernels_dir_name}/{args.mnk}.cu", "r") as f:
         code_text = f.read()
     bm, bk, bn = extract_bm_bk_bn(code_text)
     if bm > 0 and bk > 0 and bn > 0:

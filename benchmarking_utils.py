@@ -42,13 +42,13 @@ def run_benchmark(
     return out, elapsed_time_ms
 
 
-def run_all_perf_funcs_once(*, perf_func_list, m, n, k, padding_m, padding_k, padding_n):
+def run_all_perf_funcs_once(*, perf_func_list, m, n, k, acc_precise, padding_m, padding_k, padding_n):
     a = torch.randn((m, k), dtype=torch.half, device="cuda").cuda()
     b = torch.randn((k, n), dtype=torch.half, device="cuda").cuda()
     a_list, b_list, b_col_major_list, c_list = [], [], [], []
     for perf_func in perf_func_list:
         func_name = perf_func.__name__
-        if func_name == "cuda_l2_a100_fp16":
+        if func_name == f"cuda_l2_a100_{acc_precise}":
             a_use = torch.zeros((m+padding_m, k+padding_k), dtype=torch.half, device="cuda").cuda()
             a_use[:m, :k] = a.clone()
             b_use = torch.zeros((k+padding_k, n+padding_n), dtype=torch.half, device="cuda").cuda()

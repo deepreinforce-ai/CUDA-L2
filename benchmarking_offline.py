@@ -19,6 +19,7 @@ print("=====================Benchmarking Script -- Offline Mode=================
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--mnk", type=str, required=True)
+parser.add_argument("--acc_precise", type=str, required=True)
 parser.add_argument("--warmup_seconds", type=float, required=True)
 parser.add_argument("--benchmark_seconds", type=float, required=True)
 parser.add_argument("--base_dir", type=str, required=True)
@@ -31,15 +32,27 @@ torch.set_grad_enabled(False)
 
 
 load_start = time.time()
-hgemm = build_from_sources(mnk=args.mnk, base_dir=args.base_dir, verbose=False)
+hgemm = build_from_sources(mnk=args.mnk, acc_precise=args.acc_precise, base_dir=args.base_dir, verbose=False)
 load_end = time.time()
 print(f"Load hgemm module time: {load_end - load_start:.2f} seconds")
+
+if args.acc_precise == "fp16":
+    cuda_l2_func = hgemm.cuda_l2_a100_fp16  # type: ignore
+    cuda_l2_func_name = "cuda_l2_a100_fp16"
+    kernels_dir_name = "F16F16F16F16"
+elif args.acc_precise == "fp32":
+    cuda_l2_func = hgemm.cuda_l2_a100_fp32  # type: ignore
+    cuda_l2_func_name = "cuda_l2_a100_fp32"
+    kernels_dir_name = "F32F16F16F32"
+else:
+    raise ValueError
 
 
 def main():
     torch.cuda.set_device(args.gpu_device_id)
     mnk = args.mnk
     m, n, k = map(int, mnk.split("_"))
+    acc_precise = args.acc_precise
     warmup_seconds = args.warmup_seconds
     benchmark_seconds = args.benchmark_seconds
     torch.cuda.synchronize()
@@ -81,11 +94,11 @@ def main():
 
     perf_func_list = [
         perf_func_name_to_func[args.perf_func],
-        hgemm.cuda_l2_a100_fp16,  # type: ignore
+        cuda_l2_func,
     ]
     origin_perf_func_list = perf_func_list.copy()
 
-    with open(f"kernels/a100_F16F16F16F16/{mnk}.cu", "r") as f:
+    with open(f"kernels/a100_{kernels_dir_name}/{mnk}.cu", "r") as f:
         code_text = f.read()
 
     bm, bk, bn = extract_bm_bk_bn(code_text)
@@ -104,7 +117,7 @@ def main():
     warmup_count = 0
     while time.time()- warmup_start_time < warmup_seconds:
         record = run_all_perf_funcs_once(
-            perf_func_list=perf_func_list, m=m, n=n, k=k,
+            perf_func_list=perf_func_list, m=m, n=n, k=k, acc_precise=acc_precise,
             padding_m=padding_m, padding_k=padding_k, padding_n=padding_n
         )
         warmup_count += 1
@@ -117,7 +130,7 @@ def main():
     while time.time() - benchmark_start_time < benchmark_seconds:
         random.shuffle(perf_func_list)
         record = run_all_perf_funcs_once(
-            perf_func_list=perf_func_list, m=m, n=n, k=k,
+            perf_func_list=perf_func_list, m=m, n=n, k=k, acc_precise=acc_precise,
             padding_m=padding_m, padding_k=padding_k, padding_n=padding_n
         )
         record["idx"] = benchmark_count
@@ -149,7 +162,7 @@ def main():
     print(merged_result)
     print(mean_ms)
 
-    our_speed = mean_tflops["cuda_l2_a100_fp16"]
+    our_speed = mean_tflops[cuda_l2_func_name]
     baseline_speed = mean_tflops[args.perf_func]
     print(f"speedup over {args.perf_func}: {our_speed / baseline_speed:.2f}x")
     with open(os.path.join(args.base_dir, f"benchmark_result_{args.perf_func}.json"), "w") as f:

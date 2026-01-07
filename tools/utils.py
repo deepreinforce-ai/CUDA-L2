@@ -36,13 +36,19 @@ def extract_bm_bk_bk_use_rules(text: str) -> tuple[int, int, int]:
     return bm, bk, bn
 
 
-def get_build_sources(mnk):
+def get_build_sources(mnk, acc_precise):
+    if acc_precise == "fp16":
+        dir_name = "F16F16F16F16"
+    elif acc_precise == "fp32":
+        dir_name = "F32F16F16F32"
+    else:
+        raise ValueError
     build_sources = [
         "cublas/hgemm_cublas.cu",
         "cublas/hgemm_cublaslt_heuristic.cu",
         "cublas/hgemm_cublaslt_auto_tuning.cu",
-        f"kernels/a100_F16F16F16F16/{mnk}.cu",
-        "pybind/hgemm.cc",
+        f"kernels/a100_{dir_name}/{mnk}.cu",
+        f"pybind/hgemm_a100_{acc_precise}.cc",
     ]
 
     return build_sources
@@ -86,14 +92,14 @@ def get_build_cuda_cflags(build_pkg: bool = False):
     return extra_cuda_cflags
 
 
-def build_from_sources(mnk, base_dir: str, verbose: bool):
+def build_from_sources(mnk, acc_precise, base_dir: str, verbose: bool):
     torch_arch_list_env = os.environ.get("TORCH_CUDA_ARCH_LIST", None)
     device_name = torch.cuda.get_device_name(torch.cuda.current_device())
     device_capability = torch.cuda.get_device_capability(torch.cuda.current_device())
     print(f"Loading hgemm lib on device: {device_name} :: {device_capability} :: {torch_arch_list_env}")
     return load(
         name="hgemm_lib",
-        sources=get_build_sources(mnk),
+        sources=get_build_sources(mnk, acc_precise),
         extra_cuda_cflags=get_build_cuda_cflags(),
         extra_cflags=["-std=c++17", "-fuse-ld=lld"],
         verbose=verbose,

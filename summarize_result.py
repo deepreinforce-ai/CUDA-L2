@@ -8,8 +8,15 @@ import pandas
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--base_dir", type=str, required=True)
+parser.add_argument("--acc_precise", type=str, required=True)
 args = parser.parse_args()
 
+if args.acc_precise == "fp16":
+    cuda_l2_func_name = "cuda_l2_a100_fp16"
+elif args.acc_precise == "fp32":
+    cuda_l2_func_name = "cuda_l2_a100_fp32"
+else:
+    raise ValueError
 
 def summarize_results():
     base_dir = Path(args.base_dir)
@@ -28,8 +35,8 @@ def summarize_results():
             name_to_data[show_name] = {
                 "Baseline Method Name": show_name,
                 "Baseline TFLOPS": json_data["records"][original_method_name],
-                "CUDA-L2 TFLOPS": json_data["records"]["cuda_l2_a100_fp16"],
-                "Speedup": json_data["records"]["cuda_l2_a100_fp16"] / json_data["records"][original_method_name],
+                "CUDA-L2 TFLOPS": json_data["records"][cuda_l2_func_name],
+                "Speedup": json_data["records"][cuda_l2_func_name] / json_data["records"][original_method_name],
             }
     print(name_to_data)
     for name in ["cuBLAS", "cuBLASLt-heuristic", "cuBLASLt-auto-tuning"]:
