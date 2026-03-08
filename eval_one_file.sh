@@ -53,6 +53,25 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
+# Validate required arguments
+MISSING_ARGS=()
+[ -z "$MNK" ] && MISSING_ARGS+=("--mnk")
+[ -z "$ACC_PRECISE" ] && MISSING_ARGS+=("--acc_precise")
+[ -z "$WARMUP_SECONDS" ] && MISSING_ARGS+=("--warmup_seconds")
+[ -z "$BENCHMARK_SECONDS" ] && MISSING_ARGS+=("--benchmark_seconds")
+[ -z "$BASE_DIR" ] && MISSING_ARGS+=("--base_dir")
+[ -z "$GPU_DEVICE_ID" ] && MISSING_ARGS+=("--gpu_device_id")
+[ -z "$MODE" ] && MISSING_ARGS+=("--mode")
+if [ "$MODE" == "server" ] && [ -z "$TARGET_QPS" ]; then
+    MISSING_ARGS+=("--target_qps (required for server mode)")
+fi
+
+if [ ${#MISSING_ARGS[@]} -gt 0 ]; then
+    echo "Error: Missing required arguments: ${MISSING_ARGS[*]}"
+    echo "Usage: $0 --mnk <M_N_K> --acc_precise <fp16|fp32> --warmup_seconds <seconds> --benchmark_seconds <seconds> --base_dir <dir> --gpu_device_id <id> --mode <offline|server> [--target_qps <qps>]"
+    exit 1
+fi
+
 echo "MNK: $MNK"
 echo "ACC_PRECISE: $ACC_PRECISE"
 echo "WARMUP_SECONDS: $WARMUP_SECONDS"
