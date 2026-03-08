@@ -83,7 +83,6 @@ PERF_FUNCS=(
 )
 
 echo "Executing hgemm benchmark with shuffled perf_funcs..."
-shift  # Remove the first argument which is the script name
 
 # 1. Use shuf -e to randomly sort the array and start the for loop
 for func in $(shuf -e "${PERF_FUNCS[@]}"); do
