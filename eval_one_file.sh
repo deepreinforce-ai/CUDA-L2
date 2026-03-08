@@ -60,7 +60,7 @@ echo "BENCHMARK_SECONDS: $BENCHMARK_SECONDS"
 echo "BASE_DIR: $BASE_DIR"
 echo "GPU_DEVICE: $GPU_DEVICE_ID"
 
-rm $BASE_DIR/benchmark*
+rm -f "$BASE_DIR"/benchmark*
 
 python zero_one_correctness_check.py \
         --mnk $MNK \
