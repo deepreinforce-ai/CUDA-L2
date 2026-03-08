@@ -83,13 +83,13 @@ git clone -b v4.2.1 https://github.com/NVIDIA/cutlass.git cutlass
 
 Before building or running the project, you must configure the following environment variables:
 
-  * `CUTLASS_DIR`: Points to the directory where you cloned CUTLASS.
+  * `CUTLASS_DIR`: Absolute path to the directory where you cloned CUTLASS.
   * `TORCH_CUDA_ARCH_LIST`: Specifies the target GPU architecture (e.g., "8.0" for NVIDIA Ampere / A100 / RTX 30 series).
 
 Run the following commands:
 
 ```bash
-export CUTLASS_DIR=/path/to/your/cutlass
+export CUTLASS_DIR=/absolute/path/to/your/cutlass
 export TORCH_CUDA_ARCH_LIST="8.0"
 ```
 
@@ -98,13 +98,13 @@ export TORCH_CUDA_ARCH_LIST="8.0"
 To run the evaluation, use the `eval_one_file.sh` script. Below is an example command for offline mode:
 
 ```bash
-./eval_one_file.sh --mnk 64_4096_64 --warmup_seconds 5 --benchmark_seconds 10 --base_dir ./results --gpu_device_id 7 --mode offline
+./eval_one_file.sh --mnk 64_4096_64 --acc_precise fp16 --warmup_seconds 5 --benchmark_seconds 10 --base_dir ./results --gpu_device_id 0 --mode offline
 ```
 
 For server mode, you need to specify `--target_qps`:
 
 ```bash
-./eval_one_file.sh --mnk 64_4096_64 --warmup_seconds 5 --benchmark_seconds 10 --base_dir ./results --gpu_device_id 7 --mode server --target_qps 100
+./eval_one_file.sh --mnk 64_4096_64 --acc_precise fp16 --warmup_seconds 5 --benchmark_seconds 10 --base_dir ./results --gpu_device_id 0 --mode server --target_qps 100
 ```
 
 ### Arguments Reference
@@ -112,6 +112,7 @@ For server mode, you need to specify `--target_qps`:
 | Argument | Description |
 | :--- | :--- |
 | `--mnk` | Specifies the problem size (e.g., `64_4096_64`). |
+| `--acc_precise` | Accumulator precision. Options: `fp16` or `fp32`. |
 | `--warmup_seconds` | Duration of warmup in seconds before timing. |
 | `--benchmark_seconds` | Duration of benchmarking in seconds. |
 | `--base_dir` | Directory to save the compile and output results. |

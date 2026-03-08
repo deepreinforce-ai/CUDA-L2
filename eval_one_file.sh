@@ -47,11 +47,30 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         *)
-            echo "Unknown option: $2"
+            echo "Unknown option: $1"
             exit 1
             ;;
     esac
 done
+
+# Validate required arguments
+MISSING_ARGS=()
+[ -z "$MNK" ] && MISSING_ARGS+=("--mnk")
+[ -z "$ACC_PRECISE" ] && MISSING_ARGS+=("--acc_precise")
+[ -z "$WARMUP_SECONDS" ] && MISSING_ARGS+=("--warmup_seconds")
+[ -z "$BENCHMARK_SECONDS" ] && MISSING_ARGS+=("--benchmark_seconds")
+[ -z "$BASE_DIR" ] && MISSING_ARGS+=("--base_dir")
+[ -z "$GPU_DEVICE_ID" ] && MISSING_ARGS+=("--gpu_device_id")
+[ -z "$MODE" ] && MISSING_ARGS+=("--mode")
+if [ "$MODE" == "server" ] && [ -z "$TARGET_QPS" ]; then
+    MISSING_ARGS+=("--target_qps (required for server mode)")
+fi
+
+if [ ${#MISSING_ARGS[@]} -gt 0 ]; then
+    echo "Error: Missing required arguments: ${MISSING_ARGS[*]}"
+    echo "Usage: $0 --mnk <M_N_K> --acc_precise <fp16|fp32> --warmup_seconds <seconds> --benchmark_seconds <seconds> --base_dir <dir> --gpu_device_id <id> --mode <offline|server> [--target_qps <qps>]"
+    exit 1
+fi
 
 echo "MNK: $MNK"
 echo "ACC_PRECISE: $ACC_PRECISE"
@@ -60,7 +79,7 @@ echo "BENCHMARK_SECONDS: $BENCHMARK_SECONDS"
 echo "BASE_DIR: $BASE_DIR"
 echo "GPU_DEVICE: $GPU_DEVICE_ID"
 
-rm $BASE_DIR/benchmark*
+rm -f "$BASE_DIR"/benchmark*
 
 python zero_one_correctness_check.py \
         --mnk $MNK \
@@ -83,7 +102,6 @@ PERF_FUNCS=(
 )
 
 echo "Executing hgemm benchmark with shuffled perf_funcs..."
-shift  # Remove the first argument which is the script name
 
 # 1. Use shuf -e to randomly sort the array and start the for loop
 for func in $(shuf -e "${PERF_FUNCS[@]}"); do
