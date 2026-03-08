@@ -83,13 +83,13 @@ git clone -b v4.2.1 https://github.com/NVIDIA/cutlass.git cutlass
 
 Before building or running the project, you must configure the following environment variables:
 
-  * `CUTLASS_DIR`: Points to the directory where you cloned CUTLASS.
+  * `CUTLASS_DIR`: Absolute path to the directory where you cloned CUTLASS.
   * `TORCH_CUDA_ARCH_LIST`: Specifies the target GPU architecture (e.g., "8.0" for NVIDIA Ampere / A100 / RTX 30 series).
 
 Run the following commands:
 
 ```bash
-export CUTLASS_DIR=/path/to/your/cutlass
+export CUTLASS_DIR=/absolute/path/to/your/cutlass
 export TORCH_CUDA_ARCH_LIST="8.0"
 ```
 
