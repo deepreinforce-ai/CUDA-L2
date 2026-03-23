@@ -19,6 +19,7 @@ print("======================Correctness Check======================")
 parser = argparse.ArgumentParser()
 parser.add_argument("--mnk", type=str, required=True)
 parser.add_argument("--acc_precise", type=str, required=True)
+parser.add_argument("--device_type", type=str, required=True, choices=["a100", "3090"])
 parser.add_argument("--base_dir", type=str, required=True)
 parser.add_argument("--gpu_device_id", type=int, required=True)
 args = parser.parse_args()
@@ -28,17 +29,17 @@ torch.set_grad_enabled(False)
 
 
 load_start = time.time()
-hgemm = build_from_sources(mnk=args.mnk, acc_precise=args.acc_precise, base_dir=args.base_dir, verbose=False)
+hgemm = build_from_sources(mnk=args.mnk, acc_precise=args.acc_precise, device_type=args.device_type, base_dir=args.base_dir, verbose=False)
 load_end = time.time()
 print(f"Load hgemm module time: {load_end - load_start:.2f} seconds")
 
 if args.acc_precise == "fp16":
-    cuda_l2_func = hgemm.cuda_l2_a100_fp16  # type: ignore
-    cuda_l2_func_name = "cuda_l2_a100_fp16"
+    cuda_l2_func = getattr(hgemm, f"cuda_l2_{args.device_type}_fp16")
+    cuda_l2_func_name = f"cuda_l2_{args.device_type}_fp16"
     kernels_dir_name = "F16F16F16F16"
 elif args.acc_precise == "fp32":
-    cuda_l2_func = hgemm.cuda_l2_a100_fp32  # type: ignore
-    cuda_l2_func_name = "cuda_l2_a100_fp32"
+    cuda_l2_func = getattr(hgemm, f"cuda_l2_{args.device_type}_fp32")
+    cuda_l2_func_name = f"cuda_l2_{args.device_type}_fp32"
     kernels_dir_name = "F32F16F16F32"
 else:
     raise ValueError
@@ -273,7 +274,7 @@ def run_correctness_check(
 def main():
     m, n, k = map(int, args.mnk.split("_"))
     torch.cuda.set_device(args.gpu_device_id)
-    with open(f"kernels/a100_{kernels_dir_name}/{args.mnk}.cu", "r") as f:
+    with open(f"kernels/{args.device_type}_{kernels_dir_name}/{args.mnk}.cu", "r") as f:
         code_text = f.read()
     bm, bk, bn = extract_bm_bk_bn(code_text)
     if bm > 0 and bk > 0 and bn > 0:

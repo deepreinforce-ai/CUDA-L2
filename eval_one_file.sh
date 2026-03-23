@@ -3,6 +3,7 @@
 # Initialize variables with default values
 MNK=""
 ACC_PRECISE=""
+DEVICE_TYPE=""
 WARMUP_SECONDS=""
 BENCHMARK_SECONDS=""
 BASE_DIR=""
@@ -20,6 +21,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --acc_precise)
             ACC_PRECISE="$2"
+            shift 2
+            ;;
+        --device_type)
+            DEVICE_TYPE="$2"
             shift 2
             ;;
         --warmup_seconds)
@@ -55,6 +60,7 @@ done
 
 echo "MNK: $MNK"
 echo "ACC_PRECISE: $ACC_PRECISE"
+echo "DEVICE_TYPE: $DEVICE_TYPE"
 echo "WARMUP_SECONDS: $WARMUP_SECONDS"
 echo "BENCHMARK_SECONDS: $BENCHMARK_SECONDS"
 echo "BASE_DIR: $BASE_DIR"
@@ -65,6 +71,7 @@ rm $BASE_DIR/benchmark*
 python zero_one_correctness_check.py \
         --mnk $MNK \
         --acc_precise $ACC_PRECISE \
+        --device_type $DEVICE_TYPE \
         --base_dir $BASE_DIR \
         --gpu_device_id $GPU_DEVICE_ID
 if [ $? -ne 0 ]; then
@@ -97,6 +104,7 @@ for func in $(shuf -e "${PERF_FUNCS[@]}"); do
         python benchmarking_server.py \
             --mnk $MNK \
             --acc_precise $ACC_PRECISE \
+            --device_type $DEVICE_TYPE \
             --warmup_seconds $WARMUP_SECONDS \
             --benchmark_seconds $BENCHMARK_SECONDS \
             --base_dir $BASE_DIR \
@@ -107,6 +115,7 @@ for func in $(shuf -e "${PERF_FUNCS[@]}"); do
         python benchmarking_offline.py \
             --mnk $MNK \
             --acc_precise $ACC_PRECISE \
+            --device_type $DEVICE_TYPE \
             --warmup_seconds $WARMUP_SECONDS \
             --benchmark_seconds $BENCHMARK_SECONDS \
             --base_dir $BASE_DIR \
@@ -123,6 +132,6 @@ for func in $(shuf -e "${PERF_FUNCS[@]}"); do
 done
 
 # 4. Summarize the results
-python summarize_result.py --base_dir $BASE_DIR --acc_precise $ACC_PRECISE
+python summarize_result.py --base_dir $BASE_DIR --acc_precise $ACC_PRECISE --device_type $DEVICE_TYPE
 
 echo "All benchmarks completed successfully!"

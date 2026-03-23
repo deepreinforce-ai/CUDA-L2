@@ -9,12 +9,13 @@ import pandas
 parser = argparse.ArgumentParser()
 parser.add_argument("--base_dir", type=str, required=True)
 parser.add_argument("--acc_precise", type=str, required=True)
+parser.add_argument("--device_type", type=str, required=True, choices=["a100", "3090"])
 args = parser.parse_args()
 
 if args.acc_precise == "fp16":
-    cuda_l2_func_name = "cuda_l2_a100_fp16"
+    cuda_l2_func_name = f"cuda_l2_{args.device_type}_fp16"
 elif args.acc_precise == "fp32":
-    cuda_l2_func_name = "cuda_l2_a100_fp32"
+    cuda_l2_func_name = f"cuda_l2_{args.device_type}_fp32"
 else:
     raise ValueError
 

@@ -20,6 +20,7 @@ print("=====================Benchmarking Script -- Offline Mode=================
 parser = argparse.ArgumentParser()
 parser.add_argument("--mnk", type=str, required=True)
 parser.add_argument("--acc_precise", type=str, required=True)
+parser.add_argument("--device_type", type=str, required=True, choices=["a100", "3090"])
 parser.add_argument("--warmup_seconds", type=float, required=True)
 parser.add_argument("--benchmark_seconds", type=float, required=True)
 parser.add_argument("--base_dir", type=str, required=True)
@@ -32,17 +33,17 @@ torch.set_grad_enabled(False)
 
 
 load_start = time.time()
-hgemm = build_from_sources(mnk=args.mnk, acc_precise=args.acc_precise, base_dir=args.base_dir, verbose=False)
+hgemm = build_from_sources(mnk=args.mnk, acc_precise=args.acc_precise, device_type=args.device_type, base_dir=args.base_dir, verbose=False)
 load_end = time.time()
 print(f"Load hgemm module time: {load_end - load_start:.2f} seconds")
 
 if args.acc_precise == "fp16":
-    cuda_l2_func = hgemm.cuda_l2_a100_fp16  # type: ignore
-    cuda_l2_func_name = "cuda_l2_a100_fp16"
+    cuda_l2_func = getattr(hgemm, f"cuda_l2_{args.device_type}_fp16")
+    cuda_l2_func_name = f"cuda_l2_{args.device_type}_fp16"
     kernels_dir_name = "F16F16F16F16"
 elif args.acc_precise == "fp32":
-    cuda_l2_func = hgemm.cuda_l2_a100_fp32  # type: ignore
-    cuda_l2_func_name = "cuda_l2_a100_fp32"
+    cuda_l2_func = getattr(hgemm, f"cuda_l2_{args.device_type}_fp32")
+    cuda_l2_func_name = f"cuda_l2_{args.device_type}_fp32"
     kernels_dir_name = "F32F16F16F32"
 else:
     raise ValueError
@@ -98,7 +99,7 @@ def main():
     ]
     origin_perf_func_list = perf_func_list.copy()
 
-    with open(f"kernels/a100_{kernels_dir_name}/{mnk}.cu", "r") as f:
+    with open(f"kernels/{args.device_type}_{kernels_dir_name}/{mnk}.cu", "r") as f:
         code_text = f.read()
 
     bm, bk, bn = extract_bm_bk_bn(code_text)
@@ -118,7 +119,7 @@ def main():
     while time.time()- warmup_start_time < warmup_seconds:
         record = run_all_perf_funcs_once(
             perf_func_list=perf_func_list, m=m, n=n, k=k, acc_precise=acc_precise,
-            padding_m=padding_m, padding_k=padding_k, padding_n=padding_n
+            device_type=args.device_type, padding_m=padding_m, padding_k=padding_k, padding_n=padding_n
         )
         warmup_count += 1
     print(f"Warmup done: {warmup_count} iterations in {time.time() - warmup_start_time:.2f} seconds.")
@@ -131,7 +132,7 @@ def main():
         random.shuffle(perf_func_list)
         record = run_all_perf_funcs_once(
             perf_func_list=perf_func_list, m=m, n=n, k=k, acc_precise=acc_precise,
-            padding_m=padding_m, padding_k=padding_k, padding_n=padding_n
+            device_type=args.device_type, padding_m=padding_m, padding_k=padding_k, padding_n=padding_n
         )
         record["idx"] = benchmark_count
         records.append(record)

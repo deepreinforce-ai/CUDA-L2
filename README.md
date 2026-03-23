@@ -17,22 +17,25 @@ CUDA-L2: Surpassing cuBLAS Performance for Matrix Multiplication through Reinfor
 **CUDA-L2** is a system that combines large language models (LLMs) and reinforcement learning (RL) to automatically optimize Half-precision General Matrix Multiply (HGEMM) CUDA kernels. CUDA-L2 systematically outperforms major matmul baselines to date, from the widely-used torch.matmul to state-of-the-art NVIDIA closed-source libraries (cuBLAS, cuBLASLt-heuristic, cuBLASLt-AutoTuning). <a href="https://arxiv.org/pdf/2512.02551">Paper</a>
 
 <div align="center">
-  <img src="assets/benchmark_comparison.png" width="90%" alt="Evaluation Results">
+  <img src="assets/speedup_summary_all.png" width="90%" alt="Speedup Summary">
   <br>
-  <em>Speedup of CUDA-L2 over torch.matmul, cuBLAS, cuBLASLt-heuristic, and cuBLASLt-AutoTuning across 1000 (M,N,K) on A100 (16-bit accumulator).</em>
+  <em>Summary of CUDA-L2 speedup over baselines across all GPU configurations (A100 16-bit, A100 32-bit, RTX 3090 32-bit) in Offline and Server modes.</em>
 </div>
 
-<br>
-
-<div align="center">
-  <img src="assets/table.png" width="90%" alt="Evaluation Results">
-  <br>
-  <em>Speedup comparison across 1000 (M,N,K) on A100 (16-bit accumulator).</em>
-</div>
 
 
 ## 🎉 What's New
-- **[Jan 7, 2026]** Released 1,000 A100 HGEMM kernels with 32-bit accumulator (SM80_16x8x16_F32F16F16F32). 🎉🎉🎉
+- **[Mar 23, 2026]** Released RTX 3090 HGEMM (16 bit) kernels with 32-bit accumulator (SM80_16x8x16_F32F16F16F32). 🎉🎉🎉
+
+  <div align="center">
+
+  | Mode | vs torch.matmul | vs cuBLAS | vs cuBLASLt-heuristic | vs cuBLASLt-AutoTuning |
+  |:----:|:---------------:|:---------:|:--------------------:|:----------------------:|
+  | Offline | +21.3% | +24.2% | +21.1% | +12.7% |
+  | Server | +28.7% | +35.3% | +28.1% | +19.8% |
+
+  </div>
+- **[Jan 7, 2026]** Released 1,000 A100 HGEMM (16 bit) kernels with 32-bit accumulator (SM80_16x8x16_F32F16F16F32). 🎉🎉🎉
   <div align="center">
 
   | Mode | vs torch.matmul | vs cuBLAS | vs cuBLASLt-heuristic | vs cuBLASLt-AutoTuning |
@@ -41,10 +44,20 @@ CUDA-L2: Surpassing cuBLAS Performance for Matrix Multiplication through Reinfor
   | Server | +25.1% | +21.5% | +19.9% | +12.7% |
 
   </div>  
-- **[Dec 2, 2025]** Released A100 optimized HGEMM kernels across 1,000 configurations with 16-bit accumulator (SM80_16x8x16_F16F16F16F16). 
+- **[Dec 2, 2025]** Released A100 optimized HGEMM (16 bit) kernels across 1,000 configurations with 16-bit accumulator (SM80_16x8x16_F16F16F16F16). 
+
+  <div align="center">
+
+  | Mode | vs torch.matmul | vs cuBLAS | vs cuBLASLt-heuristic | vs cuBLASLt-AutoTuning |
+  |:----:|:---------------:|:---------:|:--------------------:|:----------------------:|
+  | Offline | +22.0% | +19.2% | +16.8% | +11.4% |
+  | Server | +28.7% | +26.0% | +22.4% | +15.9% |
+
+  </div>
 
 ## 🗒️ To-Do List
 - [x] Release HGEMM with 32-bit accumulator (F32F16F16F32 officially) for A100. 
+- [x] Release HGEMM  for 3090.
 - [ ] Release HGEMM for H100.
 - [ ] Support denser matrix configurations (more configurations).
 - [ ] Extend to more GPUs (Ada Lovelace, Hopper, Blackwell).
@@ -98,13 +111,13 @@ export TORCH_CUDA_ARCH_LIST="8.0"
 To run the evaluation, use the `eval_one_file.sh` script. Below is an example command for offline mode:
 
 ```bash
-./eval_one_file.sh --mnk 64_4096_64 --warmup_seconds 5 --benchmark_seconds 10 --base_dir ./results --gpu_device_id 7 --mode offline
+./eval_one_file.sh --mnk 64_4096_64 --acc_precise fp32 --device_type a100 --warmup_seconds 5 --benchmark_seconds 10 --base_dir ./results --gpu_device_id 7 --mode offline
 ```
 
 For server mode, you need to specify `--target_qps`:
 
 ```bash
-./eval_one_file.sh --mnk 64_4096_64 --warmup_seconds 5 --benchmark_seconds 10 --base_dir ./results --gpu_device_id 7 --mode server --target_qps 100
+./eval_one_file.sh --mnk 64_4096_64 --acc_precise fp32 --device_type a100 --warmup_seconds 5 --benchmark_seconds 10 --base_dir ./results --gpu_device_id 7 --mode server --target_qps 100
 ```
 
 ### Arguments Reference
@@ -112,6 +125,8 @@ For server mode, you need to specify `--target_qps`:
 | Argument | Description |
 | :--- | :--- |
 | `--mnk` | Specifies the problem size (e.g., `64_4096_64`). |
+| `--acc_precise` | Accumulator precision. Options are:<br>• `fp16`: 16-bit accumulator (SM80_16x8x16_F16F16F16F16).<br>• `fp32`: 32-bit accumulator (SM80_16x8x16_F32F16F16F32). |
+| `--device_type` | Target GPU device type. Options are `a100` or `3090`. |
 | `--warmup_seconds` | Duration of warmup in seconds before timing. |
 | `--benchmark_seconds` | Duration of benchmarking in seconds. |
 | `--base_dir` | Directory to save the compile and output results. |
