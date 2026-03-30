@@ -20,7 +20,7 @@ print("=====================Benchmarking Script -- Offline Mode=================
 parser = argparse.ArgumentParser()
 parser.add_argument("--mnk", type=str, required=True)
 parser.add_argument("--acc_precise", type=str, required=True)
-parser.add_argument("--device_type", type=str, required=True, choices=["a100", "3090"])
+parser.add_argument("--device_type", type=str, required=True, choices=["a100", "3090", "h100"])
 parser.add_argument("--warmup_seconds", type=float, required=True)
 parser.add_argument("--benchmark_seconds", type=float, required=True)
 parser.add_argument("--base_dir", type=str, required=True)

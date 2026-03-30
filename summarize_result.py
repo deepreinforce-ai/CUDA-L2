@@ -9,7 +9,7 @@ import pandas
 parser = argparse.ArgumentParser()
 parser.add_argument("--base_dir", type=str, required=True)
 parser.add_argument("--acc_precise", type=str, required=True)
-parser.add_argument("--device_type", type=str, required=True, choices=["a100", "3090"])
+parser.add_argument("--device_type", type=str, required=True, choices=["a100", "3090", "h100"])
 args = parser.parse_args()
 
 if args.acc_precise == "fp16":

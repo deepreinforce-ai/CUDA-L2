@@ -106,6 +106,22 @@ void fill_random_half(half* data, int size, cudaStream_t stream) {
 
 // ========== NN mode: Double warmup + shuffle + random init ==========
 void find_best_algo_nn_v2(int M, int N, int K) {
+    if (nn_operationDescV2) {
+        cublasLtMatmulDescDestroy(nn_operationDescV2);
+        nn_operationDescV2 = NULL;
+    }
+    if (nn_AdescV2) {
+        cublasLtMatrixLayoutDestroy(nn_AdescV2);
+        nn_AdescV2 = NULL;
+    }
+    if (nn_BdescV2) {
+        cublasLtMatrixLayoutDestroy(nn_BdescV2);
+        nn_BdescV2 = NULL;
+    }
+    if (nn_CdescV2) {
+        cublasLtMatrixLayoutDestroy(nn_CdescV2);
+        nn_CdescV2 = NULL;
+    }
     // printf("\n");
     // printf("════════════════════════════════════════════════════════════════\n");
     // printf("  [V2] Finding best algorithm for NN mode (M=%d, N=%d, K=%d)\n", M, N, K);
@@ -291,6 +307,22 @@ void find_best_algo_nn_v2(int M, int N, int K) {
 
 // ========== TN mode: Double warmup + shuffle + random init ==========
 void find_best_algo_tn_v2(int M, int N, int K) {
+    if (tn_operationDescV2) {
+        cublasLtMatmulDescDestroy(tn_operationDescV2);
+        tn_operationDescV2 = NULL;
+    }
+    if (tn_AdescV2) {
+        cublasLtMatrixLayoutDestroy(tn_AdescV2);
+        tn_AdescV2 = NULL;
+    }
+    if (tn_BdescV2) {
+        cublasLtMatrixLayoutDestroy(tn_BdescV2);
+        tn_BdescV2 = NULL;
+    }
+    if (tn_CdescV2) {
+        cublasLtMatrixLayoutDestroy(tn_CdescV2);
+        tn_CdescV2 = NULL;
+    }
     // printf("\n");
     // printf("════════════════════════════════════════════════════════════════\n");
     // printf("  [V2] Finding best algorithm for TN mode (M=%d, N=%d, K=%d)\n", M, N, K);

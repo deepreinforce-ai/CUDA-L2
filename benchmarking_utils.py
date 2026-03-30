@@ -20,27 +20,17 @@ def run_benchmark(
     tag = perf_func.__name__
     out.fill_(0)
 
+    torch.cuda.synchronize()
+    t0 = time.time()
     if tag != "matmul":
-        torch.cuda.synchronize()
-        start_event = torch.cuda.Event(enable_timing=True)
-        end_event = torch.cuda.Event(enable_timing=True)
-        start_event.record()  # type: ignore
         perf_func(a, b, b_col_major, out)
-        end_event.record()  # type: ignore
-        torch.cuda.synchronize()
-        elapsed_time_ms = start_event.elapsed_time(end_event)
     else:
-        torch.cuda.synchronize()
-        start_event = torch.cuda.Event(enable_timing=True)
-        end_event = torch.cuda.Event(enable_timing=True)
-        start_event.record()  # type: ignore
         perf_func(a, b, out=out)
-        end_event.record()  # type: ignore
-        torch.cuda.synchronize()
-        elapsed_time_ms = start_event.elapsed_time(end_event)
-    
-    return out, elapsed_time_ms
+    torch.cuda.synchronize()
+    t1 = time.time()
+    elapsed_time_ms = (t1 - t0) * 1000
 
+    return out, elapsed_time_ms
 
 def run_all_perf_funcs_once(*, perf_func_list, m, n, k, acc_precise, device_type, padding_m, padding_k, padding_n):
     a = torch.randn((m, k), dtype=torch.half, device="cuda").cuda()

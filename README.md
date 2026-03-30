@@ -19,12 +19,23 @@ CUDA-L2: Surpassing cuBLAS Performance for Matrix Multiplication through Reinfor
 <div align="center">
   <img src="assets/speedup_summary_all.png" width="90%" alt="Speedup Summary">
   <br>
-  <em>Summary of CUDA-L2 speedup over baselines across all GPU configurations (A100 16-bit, A100 32-bit, RTX 3090 32-bit) in Offline and Server modes.</em>
+  <em>Summary of CUDA-L2 speedup over baselines across all GPU configurations (RTX 3090-F32F16F16F32, A100-F16F16F16F16, A100-F32F16F16F32, H100-F32F16F16F32) in Offline and Server modes.</em>
 </div>
 
 
 
 ## 🎉 What's New
+- **[Mar 30, 2026]** Released H100 HGEMM (16 bit) kernels with 32-bit accumulator (F32F16F16F32).  🎉🎉🎉
+
+  <div align="center">
+
+  | Mode | vs torch.matmul | vs cuBLAS | vs cuBLASLt-heuristic | vs cuBLASLt-AutoTuning |
+  |:----:|:---------------:|:---------:|:--------------------:|:----------------------:|
+  | Offline | +19.8% | +17.5% | +28.8% | +7.0% |
+  | Server | +41.7% | +40.5% | +42.1% | +22.1% |
+
+  </div>
+
 - **[Mar 23, 2026]** Released RTX 3090 HGEMM (16 bit) kernels with 32-bit accumulator (SM80_16x8x16_F32F16F16F32). 🎉🎉🎉
 
   <div align="center">
@@ -57,8 +68,8 @@ CUDA-L2: Surpassing cuBLAS Performance for Matrix Multiplication through Reinfor
 
 ## 🗒️ To-Do List
 - [x] Release HGEMM with 32-bit accumulator (F32F16F16F32 officially) for A100. 
-- [x] Release HGEMM  for 3090.
-- [ ] Release HGEMM for H100.
+- [x] Release HGEMM with 32-bit accumulator (F32F16F16F32 officially) for 3090.
+- [x] Release HGEMM with 32-bit accumulator (F32F16F16F32 officially) for H100.
 - [ ] Support denser matrix configurations (more configurations).
 - [ ] Extend to more GPUs (Ada Lovelace, Hopper, Blackwell).
 - [ ] Easy deployment for open-source LLMs.
@@ -97,13 +108,15 @@ git clone -b v4.2.1 https://github.com/NVIDIA/cutlass.git cutlass
 Before building or running the project, you must configure the following environment variables:
 
   * `CUTLASS_DIR`: Points to the directory where you cloned CUTLASS.
-  * `TORCH_CUDA_ARCH_LIST`: Specifies the target GPU architecture (e.g., "8.0" for NVIDIA Ampere / A100 / RTX 30 series).
+  * `TORCH_CUDA_ARCH_LIST`: Specifies the target GPU architecture (e.g., "8.0" for NVIDIA Ampere / A100 / RTX 30 series, "9.0a" for NVIDIA H100).
 
 Run the following commands:
 
 ```bash
 export CUTLASS_DIR=/path/to/your/cutlass
 export TORCH_CUDA_ARCH_LIST="8.0"
+# If you are using H100, use:
+# export TORCH_CUDA_ARCH_LIST="9.0a"
 ```
 
 ## Usage
@@ -125,8 +138,8 @@ For server mode, you need to specify `--target_qps`:
 | Argument | Description |
 | :--- | :--- |
 | `--mnk` | Specifies the problem size (e.g., `64_4096_64`). |
-| `--acc_precise` | Accumulator precision. Options are:<br>• `fp16`: 16-bit accumulator (SM80_16x8x16_F16F16F16F16).<br>• `fp32`: 32-bit accumulator (SM80_16x8x16_F32F16F16F32). |
-| `--device_type` | Target GPU device type. Options are `a100` or `3090`. |
+| `--acc_precise` | Accumulator precision. Options are:<br>• `fp16`: 16-bit accumulator (F16F16F16F16).<br>• `fp32`: 32-bit accumulator (F32F16F16F32). |
+| `--device_type` | Target GPU device type. Options are `a100` , `3090` or `h100`. |
 | `--warmup_seconds` | Duration of warmup in seconds before timing. |
 | `--benchmark_seconds` | Duration of benchmarking in seconds. |
 | `--base_dir` | Directory to save the compile and output results. |
